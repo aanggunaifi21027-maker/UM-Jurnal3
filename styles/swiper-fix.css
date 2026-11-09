@@ -1,0 +1,101 @@
+/* ============================================================
+   Swiper fix — native scroll based carousel
+   ------------------------------------------------------------
+   Track lama pakai kombinasi "relative left -256px" + "transform:
+   scale(.75)" lalu digeser pakai transform: translateX(...) yang
+   dihitung dari offsetWidth (unscaled). Kombinasi itu bikin posisi
+   kartu meleset (ketutupan / terpotong) begitu jumlah kartu hasil
+   fetch API beda dari kartu placeholder awal.
+
+   Swiper baru pakai native horizontal scroll + scroll-snap. Panah
+   kiri/kanan tinggal manggil viewport.scrollTo(...), jadi tidak ada
+   lagi hitung-hitungan transform manual yang gampang meleset.
+   ============================================================ */
+
+/* ============================================================
+   🔧 PENGATURAN UKURAN SWIPER — EDIT DI SINI SAJA
+   ------------------------------------------------------------
+   Kalau ukuran kartu masih kurang pas (kegedean/kekecilan) di
+   salah satu lebar layar, TINGGAL UBAH ANGKA DI BAWAH INI. Tidak
+   perlu utak-atik HTML atau file CSS/JS lain.
+
+   Satuannya "skala" (1 = ukuran asli kartu 300x440px, 0.5 = setengah
+   ukuran asli, dst). Ada 3 kelompok breakpoint (mengikuti breakpoint
+   Tailwind punya proyek ini: sm=576px, lg=992px), dan swiper "Artikel"
+   dipisah dari "Buku" / "Karya Ilmiah" karena di desain awal keduanya
+   memang beda skala di layar besar.
+   ============================================================ */
+:root {
+    --swiper-scale-sm: 0.375;
+    /* layar kecil / HP, < 576px */
+    --swiper-scale-mid: 0.75;
+    /* layar sedang, 576px – 991px */
+    --swiper-scale-lg-artikel: 0.6;
+    /* layar besar (>=992px) khusus swiper "Artikel" */
+    --swiper-scale-lg-buku: 0.6375;
+    /* layar besar (>=992px) khusus swiper "Buku" & "Karya Ilmiah" */
+}
+
+.swiper-viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* old Edge / IE */
+}
+
+.swiper-viewport::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, new Edge */
+}
+
+.swiper-track .document-card {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------
+   Ukuran kartu (scale)
+   ------------------------------------------------------------
+   Kode lama menaruh "scale-75" pada .swiper-track (di DALAM area
+   yang di-scroll) lalu digabung lagi dengan scale responsif punya
+   .swiper-viewport sendiri (lg:scale-80 / lg:scale-85 / max-sm:scale-50)
+   dari nenek moyangnya -> dua transform ketumpuk (nested).
+
+   Transform di DALAM elemen yang di-scroll (.swiper-track) itu yang
+   bikin acuan "posisi scroll asli (layout px)" vs "posisi yang
+   kelihatan di layar (setelah discale)" jadi tidak singkron - ini
+   akar masalah yang sama seperti bug "-left-64" sebelumnya. Makanya
+   scale-nya sudah dipindah SATU LEVEL SAJA ke .swiper-viewport
+   (elemen yang di-scroll, discale dari LUAR - aman untuk perhitungan
+   scroll), dan angkanya dijadikan variabel CSS di atas biar gampang
+   diubah.
+   ------------------------------------------------------------ */
+
+.swiper-viewport {
+    transform: scale(var(--swiper-scale-mid));
+}
+
+/* varian "Artikel" */
+@media (min-width: 992px) {
+    .swiper-viewport--80 {
+        transform: scale(var(--swiper-scale-lg-artikel));
+    }
+}
+
+/* varian "Buku" & "Karya Ilmiah" */
+@media (min-width: 992px) {
+    .swiper-viewport--85 {
+        transform: scale(var(--swiper-scale-lg-buku));
+    }
+}
+
+@media (max-width: 575px) {
+    .swiper-viewport {
+        transform: scale(var(--swiper-scale-sm));
+    }
+}
