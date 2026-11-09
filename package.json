@@ -1,4 +1,11 @@
 {
+  "name": "um-jurnal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd server && npm install --include=dev && npx prisma generate",
+    "start": "cd server && npx prisma db push --accept-data-loss && node src/index.js"
+  },
   "dependencies": {
     "@tailwindcss/cli": "^4.3.3",
     "tailwindcss": "^4.3.3"
